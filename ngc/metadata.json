@@ -1,0 +1,25 @@
+{
+  "advanced": "$ADVANCED_MD",
+  "application": "OTHER",
+  "builtBy": "NVIDIA",
+  "description": "$OVERVIEW_MD",
+  "displayName": "Clara Deploy Ansible Installation",
+  "labels": [
+    "Healthcare",
+    "Clara Deploy",
+    "Medical Imaging"
+  ],
+  "logo": "https://assets.nvidiagrid.net/ngc/containers/covid-clara.png",
+  "modelFormat": "N/A",
+  "name": "clara_ansible",
+  "performance": "$PERFORMANCE_MD",
+  "precision": "OTHER",
+  "publicDatasetUsed": {},
+  "publisher": "NVIDIA",
+  "quickStartGuide": "$QUICKSTART_MD",
+  "relatedModels": [
+  ],
+  "setup": "$SETUP_MD",
+  "shortDescription": "The Clara Ansible installation package allows you to setup one or many systems with all dependencies required to run Clara Platform SDK",
+  "trainingFramework": "Other"
+}

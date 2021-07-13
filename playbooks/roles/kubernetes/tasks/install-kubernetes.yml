@@ -1,0 +1,156 @@
+# Copyright 2021 NVIDIA Corporation
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#     http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+- name: Add K8s GPG apt Key
+  become: yes
+  apt_key:
+    url: "{{ kubernetes_gpg_key }}"
+    state: present
+
+- name: Add Kubernetes Repository
+  become: yes
+  apt_repository:
+    repo: "{{ kubernetes_repo }}"
+    state: present
+
+- name: Update apt and Install kubelet
+  become: yes
+  apt:
+    name: kubelet={{ kubernetes_version }}
+    update_cache: yes
+    state: present
+    force: true
+  register: kubelet_install
+
+- name: Update apt and Install kubeadm
+  become: yes
+  apt:
+    name: kubeadm={{ kubernetes_version }}
+    update_cache: yes
+    force: true
+    state: present
+
+- name: Update apt and Install kubectl
+  become: yes
+  apt:
+    name: kubectl={{ kubernetes_version }}
+    update_cache: yes
+    force: true
+    state: present
+
+- name: Copy Kubernetes Files to Remote Host
+  copy:
+    src: "files/{{item}}"
+    dest: /tmp
+  with_items:
+    - kube-flannel-rbac.yml
+    - nvidia-device-plugin.yml
+    - rbac-config.yml
+
+- name: Add kube-flannel template
+  template:
+    src: kube-flannel.j2
+    dest: /tmp/kube-flannel.yml
+
+
+- name: Check if Kubernetes is initialized
+  stat:
+    path: /etc/kubernetes/admin.conf
+  register: kubernetes_init
+
+- debug:
+    msg: "Kube admin exists"
+  when: kubernetes_init.stat.exists
+
+- name: Initialize kubeadm
+  become: yes
+  shell: kubeadm init --pod-network-cidr="{{ kubernetes_service_cidr }}"
+  when: not kubernetes_init.stat.exists
+
+- name: Creates User kube Directory
+  file:
+    path: "/home/{{ clara_user }}/.kube"
+    state: directory
+
+- name: Copy Kubernetes Configuration
+  become: yes
+  copy:
+    src: /etc/kubernetes/admin.conf
+    dest: "/home/{{ clara_user }}/.kube/config"
+    owner: "{{ clara_user }}"
+    group: "{{ clara_user }}"
+    mode: 0660
+    remote_src: yes
+
+- name: Remove taints on Primary Node
+  shell: kubectl taint nodes --all node-role.kubernetes.io/master-
+  ignore_errors: yes
+
+- name: Apply Flannel RBAC
+  shell: |
+    kubectl apply -f /tmp/kube-flannel-rbac.yml
+  environment:
+    KUBECONFIG: /home/{{ ansible_user }}/.kube/config
+
+- name: Apply Flannel
+  shell: |
+    kubectl apply -f /tmp/kube-flannel.yml
+  environment:
+    KUBECONFIG: /home/{{ ansible_user }}/.kube/config
+
+- name: NVIDIA Device Plugin
+  shell: |
+    kubectl apply -f /tmp/nvidia-device-plugin.yml
+  environment:
+    KUBECONFIG: /home/{{ ansible_user }}/.kube/config
+
+- name: Apply Helm RBAC
+  shell: |
+    kubectl apply -f /tmp/rbac-config.yml
+  environment:
+    KUBECONFIG: /home/{{ ansible_user }}/.kube/config
+
+- name: Restart Kubelet
+  become: yes
+  service:
+    name: kubelet
+    daemon_reload: yes
+    state: restarted
+  when: kubelet_install.changed == True
+
+- name: Download Helm
+  get_url:
+    url: "https://get.helm.sh/{{ helm_filename }}"
+    dest: "/tmp/{{ helm_filename }}"
+    checksum: "{{ helm_checksum }}"
+
+- name: Install Helm Executable
+  unarchive:
+    src: "/tmp/{{ helm_filename }}"
+    dest: /tmp
+    remote_src: yes
+
+- name: Copy Helm Executable to Path
+  become: yes
+  copy:
+    src: /tmp/linux-amd64/helm
+    dest: /usr/local/bin
+    remote_src: yes
+    owner: root
+    group: root
+    mode: 0755
+
+- name: Initialize Helm in Cluster
+  shell: helm init --stable-repo-url https://charts.helm.sh/stable --upgrade --force-upgrade --service-account tiller

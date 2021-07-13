@@ -1,0 +1,13 @@
+{
+    "accuracyReached": 0,
+    "batchSize": 0,
+    "description": "$OVERVIEW_MD",
+    "gpuModel": "Pascal and later",
+    "versionId": "$BUILD_TAG",
+    "memoryFootprint": "-",
+    "numberOfEpochs": 0,
+    "performance": "$PERFORMANCE_MD",
+    "quickStartGuide": "$QUICKSTART_MD",
+    "releaseNotes": "$RELEASE_MD",
+    "setup": "$SETUP_MD"
+  }

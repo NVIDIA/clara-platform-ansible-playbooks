@@ -1,0 +1,49 @@
+# Copyright 2021 NVIDIA Corporation
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#     http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+- name: Ubuntu | remove ppa
+  apt_repository:
+    repo: ppa:graphics-drivers/ppa
+    state: absent
+
+- name: Ubuntu | add pin file
+  copy:
+    src: "cuda-ubuntu.pin"
+    dest: "/etc/apt/preferences.d/cuda-repository-pin-600"
+    owner: "root"
+    group: "root"
+    mode: "0644"
+
+- name: Ubuntu | add key
+  apt_key:
+    url: "{{ nvidia_driver_ubuntu_cuda_repo_gpgkey_url }}"
+    id: "{{ nvidia_driver_ubuntu_cuda_repo_gpgkey_id }}"
+  environment: "{{proxy_env if proxy_env is defined else {}}}"
+
+- name: Ubuntu | add CUDA repo
+  apt_repository:
+    repo: "deb {{ nvidia_driver_ubuntu_cuda_repo_baseurl }} /"
+    update_cache: yes
+  environment: "{{proxy_env if proxy_env is defined else {}}}"
+
+- name: Ubuntu | install driver
+  package:
+    name: "{{ nvidia_driver }}"
+    state: present
+
+- name: Reboot Machine after install
+  run_once: true
+  reboot:
+    reboot_timeout: 360

@@ -1,0 +1,44 @@
+# Copyright 2021 NVIDIA Corporation
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#     http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+---
+- name: Add Repository Key
+  become: yes
+  apt_key:
+    url: "{{ nvidia_docker_gpg }}"
+    state: present
+
+- name: Add Repository Source
+  become: yes
+  get_url:
+    url: "{{ nvidia_docker_repo_src }}"
+    dest: "{{ nvidia_docker_repo_dst }}"
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Install Nvidia Docker 2
+  become: yes
+  apt: name=nvidia-docker2 state=latest update_cache=yes
+  register: nvidia_docker_install
+
+- name: Update daemon.json with NVIDIA as Default Runtime
+  become: yes
+  copy:
+    src: files/daemon.json
+    dest: /etc/docker/daemon.json
+
+- name: Reload Docker Configuration
+  become: yes
+  service: name=docker state=reloaded
+  when: nvidia_docker_install.changed == True
