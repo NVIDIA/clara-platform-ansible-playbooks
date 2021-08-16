@@ -11,8 +11,6 @@ To install Ansible follow the link [Installing Ansible](https://docs.ansible.com
 #### 2.1 A note on the NVIDIA Driver
 It is assumed the host system has a working NVIDIA driver prior to installing Clara. If your host does not have the NVIDIA driver, you can install the correct version for this version of clara via the `playbooks/driver.yml` file. To install the driver using Ansible, see section 2.2
 
-Clara can run on non-gpu systems. If your system does not have a GPU, you will need to set the `gpu_system` value to `false` in the `playbooks/clara.yml` file. This will ensure that NVIDIA-Docker2 is not set as the default container runtime. Do not run the `playbooks/driver.yml` playbook on non-GPU systems.
-
 
 #### 2.2 NVIDIA Driver installation via Ansible
 
@@ -85,7 +83,7 @@ Once the values are set, `cd` into the `/playbooks` directory and run:
 
 **Note:** Editable values can be configured in the `clara.yml` file (eg. `ngc_org: ea-nvidia-clara` for early access users, additional Clara components, Kubernetes networking settings)
 
-### 3.3 Uninstalling Clara
+### 3 Uninstalling Clara
 
 To uninstall Clara locally, run: 
 ```
