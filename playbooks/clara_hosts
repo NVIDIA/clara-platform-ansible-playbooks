@@ -6,18 +6,9 @@
 # distribution of this software and related documentation without an express
 # license agreement from NVIDIA CORPORATION is strictly prohibited.
 
-# Define Clara Host Variables Here. Note, the contents of this file can be copied to `/etc/ansible/hosts`
+#This file is for installing Clara on one or more hosts.
+#For more information on hosts files see https://ansible-tips-and-tricks.readthedocs.io/en/latest/ansible/inventory/
 
 [clara_hosts]
-# ** To install Clara onto one or more remote machines, running Ansible from your local machine **
-# add their IP addresses below, eg:
+# Add remote machine IP address(es) below, eg:
 # 10.0.0.2
-
-# ** To installing Clara on your local machine, running Ansible from your local machine **
-# Copy the contents of your SSH public key (~/.ssh/id_rsa.pub) into ~/.ssh/authorized_keys
-# In addition, set the following IP address.:
-# 127.0.0.1
-
-[clara_hosts:vars]
-# Force Ansible to use Python3. Only change if your Python3 binary is in a different location
-ansible_python_interpreter=/usr/bin/python3

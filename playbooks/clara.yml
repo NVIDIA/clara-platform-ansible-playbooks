@@ -6,21 +6,21 @@
 # distribution of this software and related documentation without an express
 # license agreement from NVIDIA CORPORATION is strictly prohibited.
 ---
-- hosts: all
+- hosts: localhost
   gather_facts: yes
   remote_user: "{{ clara_user }}"
   become: yes
   vars:
+    ansible_python_interpreter: "/usr/bin/python3"
     execute: "install" # change to "uninstall" or pass `-e execute=uninstall` with the ansible-playbook command to uninstall
+    gpu_system: true
     clara_user: '' # add the name of the user on the machine
-
     # Set this before running the install-clara playbook
     ngc_api_key: ''
     # NGC (NVIDIA Graphics Cloud) Org and Team to Install Clara from:
     ngc_org: nvidia
     ngc_team: clara
     ngc_helm_repo: https://helm.ngc.nvidia.com
-
     # Install base Clara Component(s) -- 'platform' is always necesary for Clara to run
     clara_components: [ 'platform', 'dicom']
     # Example value with all availalbe components:

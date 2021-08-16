@@ -12,4 +12,6 @@
 
 - name: Install Nvidia Docker 2
   include_tasks: install-nvidia-docker.yml
-  when: ansible_distribution == "Ubuntu"
+  when: 
+    - ansible_distribution == "Ubuntu"
+    - gpu_system == true
