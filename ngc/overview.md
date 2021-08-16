@@ -10,81 +10,88 @@ To install Ansible in the control node follow the link [Installing Ansible](http
 
 #### 2.1 Setting Up Hosts/Groups for installing Clara on remote hosts
 
-The file `playbooks/clara_hosts` includes an inventory file, with variables which are shared amongst all hosts. You can run the included hosts file by passing `-i clara_hosts` or update `/etc/ansible/hosts` with the included variables and list of preferred hosts on which you want to perform the Clara installations. The playbooks assume that there is a group name `clara_hosts` each with a user `nvidia`, you may choose to change these entries in the playbooks. (See [https://docs.ansible.com/ansible/latest/user_guide/intro_inventory.html](https://docs.ansible.com/ansible/latest/user_guide/intro_inventory.html)).
+The file `playbooks/clara_hosts` includes an inventory file, with variables which are shared amongst all hosts. You can run the included hosts file by passing `-i clara_hosts`. If you have an existing Ansible hosts file, update `/etc/ansible/hosts` with the included variables and list of preferred hosts on which you want to perform the Clara installation. The playbooks assume that there is a group name `clara_hosts`, however, all variables are configurable within the playbooks. (See [https://docs.ansible.com/ansible/latest/user_guide/intro_inventory.html](https://docs.ansible.com/ansible/latest/user_guide/intro_inventory.html)).
 
 
 #### 2.2 Setting SSH Connectivity
 
-Create a local SSH key and share place it in all the hosts in which you aim to perform the deployment.
+Ansible works on remote machines over SSH connection. To install Clara onto remote machines, create a local SSH key and make sure it is copied to all remote hosts in which you aim to install Clara on. You can skip this step if running Ansible on the same machine.
 
-For example, you can generate a key and copy it using the folowing:
+For example, you can generate a key locally, then copy it to the remote target host using the folowing two commands:
 ```
 # ssh-keygen
-# ssh-copy-id -i ~/.ssh/mykey user@host
+# ssh-copy-id -i ~/.ssh/mykey user@targethost
 ```
 
 #### 2.3 Setting Up Hosts/Groups for installing Clara locally
 
-To run the playbooks locally, within the `playbooks/clara_hosts`, instead of passing the IP address of a remote system, add `localhost ansible_connection=local`. This will allow you to run the playbook locally. You will also need to pass the flag `-ask-become-pass` with all `ansible-playbook` commands to give Ansible the needed sudo permissions to install packages. For example: `ansible-playbook -K install-clara.yml --ask-become-pass`
+To run the playbooks locally, within the `playbooks/clara_hosts`, instead of passing the IP address of a remote system, uncomment the line `localhost ansible_connection=local`. For example: `ansible-playbook -K install-clara.yml`
 
-**Note:** The playbook`install-nvidia-driver.yml` forces a reboot after installation to ensure the driver is set up correctly. If installing locally, after the system reboot, continue the installation with the next playbook `install-clara-prereqs.yml` and `install-clara.yml`
 
-## 3. Installation Options
+## 3. Installing Clara
 
-### 3.1 Installing NVIDIA Drivers
+### 3.1 NVIDIA Driver information
 
-To install NVIDIA Drivers
+**Note:** The `driver.yml` is included to install the recommended version of the NVIDIA driver matching the current release of Clara. It is recommended to only install the NVIDIA driver via Ansible if you do not already have an NVIDIA driver present. Once the driver is instaled or uninstalled, Ansible will ask if you want to reboot the machine, this step recommended to ensure that the driver is operational. If you are running this playbook on the same machine which the driver is to be installed, the playbook will quit at the final step (reboot). Once this is complete, please reboot your machine manually before proceeding to install Clara.
+
+Before running the `driver.yml` playbook, edit the `driver.yml` file and add the name of the user on the machine that Ansible should login as. This presumes the steps outlined in section 2 are completed first.
+
+You may override the default Nvidia driver version under `roles/nvidia-driver/defaults/main.yml` using the `-e` command line option eg:
 ```
-ansible-playbook -K install-nvidia-driver.yml -i clara_hosts
+ansible-playbook -K driver.yml -e 'nvidia_driver_version=XXX' -i clara_hosts
 ```
-At the prompt enter the `sudo` password for the host machine. At the end of the installation the target host(s) will be restarted for the changes to take effect.
+where `XXX` is your preferred version (eg. 460).
 
-You may override the default Nvidia driver version under `roles/nvidia-driver/defaults/main.yml` using the `-e` command line option as
+
+To uninstall the driver, run 
 ```
-ansible-playbook -K install-nvidia-driver.yml -e 'nvidia_driver=nvidia-driver-XXX' -i clara_hosts
-```
-where `XXX` is your preferred version.
-
-**Note:** Do not run this playbook if an NVIDIA driver is present on your machine, as it will not remove the existing driver.
-
-### 3.2 Installing Clara Prerequisites
-
-To install Clara prerequisites run
-```
-ansible-playbook -K install-clara-prereqs.yml -i clara_hosts
+ansible-playbook -K driver.yml -e 'execute=uninstall' -i clara_hosts
 ```
 
-#### Assumptions
+### 3.2 Installing Clara Components
 
-* It is assumed that before the Clara prerequisites playbook is run, a compatible version of the NVIDIA drivers exists in all remote machines affected.
-* The playbook is designed for Ubuntu on the `x86_64` architecture, however, the user may update or enhance the script to fit their target systems.
+To install basic Clara components run the following command:
 
-#### Tasks
-
-The prerequisites installation script will:
-* install Docker CE
-* install NVIDIA Docker 2
-* turn Swap space off
-* install OpenShift Python libraries to enable the `k8s` Ansible module
-* install Kubernetes (`kubeadm`, `kubectl`, `kubelet`)
-* install Helm
-
-### 3.3 Installing Clara Components
-
-To install basic Clara components run
 ```
-ansible-playbook -K install-clara.yml -i clara_hosts
+ansible-playbook -K clara.yml -i clara_hosts
 ```
 
-Clara components available for insallation:
+Clara components available for installation:
 - `platform`:
 - `dicom`:
-- `monitor`:
 - `console`:
 - `render`
 
-By default only `platform` and `dicom` are installed, however, the user may override the default variable `clara_components` as
+The default Clara components are `platform` and `dicom`. This can be modified in the `clara_components` variable within `ansible/playbooks/clara_hosts` file.
+
+#### Tasks
+
+The Clara Ansible playbook will:
+* Install NVIDIA Driver (optional)
+* Install Docker CE
+* Install NVIDIA Docker 2
+* Turn Swap space off
+* Install OpenShift Python libraries to enable the `k8s` Ansible module
+* Install and start Kubernetes (`kubeadm`, `kubectl`, `kubelet`)
+* Install Helm
+* Install Clara CLI Binaries and Components
+* Start Clara
+
+#### Assumptions
+
+* The playbook is designed for Ubuntu on the `x86_64` architecture, however, the user may update or enhance the playbooks to fit their target systems.
+
+### 3.3 Uninstalling Clara
+
+To uninstall Clara, run: 
 ```
-ansible-playbook -K install-clara.yml -i clara_hosts -e 'clara_components=["platform", "dicom", "render"]'
+ansible-playbook -K clara.yml -e 'execute=uninstall' -i clara_hosts
 ```
-or by updating the default value of `clara_components` in `ansible/playbooks/roles/clara-components/default/main.yml`.
+
+This will prompt to remove:
+- `.clara` data directory
+- Helm
+- Kubernetes & Kubernetes Binaries
+- NVIDIA Docker
+- Docker
+- NVIDIA Driver (optional)

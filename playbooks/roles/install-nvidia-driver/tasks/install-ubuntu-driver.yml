@@ -1,0 +1,69 @@
+# Copyright (c) 2020-2021, NVIDIA CORPORATION.  All rights reserved.
+#
+# NVIDIA CORPORATION and its licensors retain all intellectual property
+# and proprietary rights in and to this software, related documentation
+# and any modifications thereto.  Any use, reproduction, disclosure or
+# distribution of this software and related documentation without an express
+# license agreement from NVIDIA CORPORATION is strictly prohibited.
+
+---
+ 
+- name: Remove Cuda ppa before installing CUDA (if applicable)
+  become: yes
+  apt_repository:
+    repo: ppa:graphics-drivers/ppa
+    state: absent
+
+- name: Add Cuda-ubuntu pin file
+  become: yes
+  copy:
+    src: "cuda-ubuntu.pin"
+    dest: "/etc/apt/preferences.d/cuda-repository-pin-600"
+    owner: "root"
+    group: "root"
+    mode: "0644"
+
+- name: Add Cuda apt key
+  become: yes
+  apt_key:
+    url: "{{ nvidia_driver_ubuntu_cuda_repo_gpgkey_url }}"
+    id: "{{ nvidia_driver_ubuntu_cuda_repo_gpgkey_id }}"
+  environment: "{{proxy_env if proxy_env is defined else {}}}"
+
+- name: Add CUDA Apt repository
+  become: yes
+  apt_repository:
+    repo: "deb {{ nvidia_driver_ubuntu_cuda_repo_baseurl }} /"
+    update_cache: yes
+  environment: "{{proxy_env if proxy_env is defined else {}}}"
+
+- name: Install NVIDIA Driver
+  become: yes
+  apt:
+    name: "nvidia-driver-{{ nvidia_driver_version }}"
+    state: present
+  register: driver_installed
+
+- name: Add Profile Script to Set Environment for Toolkit
+  copy:
+    src: "cuda-vars.sh"
+    dest: "/etc/profile.d/cuda-vars.sh"
+    owner: "root"
+    group: "root"
+    mode: "0644"
+  when: cuda_toolkit_add_profile_script
+
+- name: Reboot system (if applicable)
+  pause:
+    prompt: "Reboot system now (to complete NVIDIA Driver installation)? [y/N]"
+    echo: yes
+  register: reboot
+  ignore_errors: true
+ 
+- name: Reboot Machine after install
+  reboot:
+    reboot_timeout: 360
+  become: yes
+  ignore_errors: true
+  when: 
+    - reboot.user_input=='y'

@@ -1,0 +1,126 @@
+# Copyright (c) 2020-2021, NVIDIA CORPORATION.  All rights reserved.
+#
+# NVIDIA CORPORATION and its licensors retain all intellectual property
+# and proprietary rights in and to this software, related documentation
+# and any modifications thereto.  Any use, reproduction, disclosure or
+# distribution of this software and related documentation without an express
+# license agreement from NVIDIA CORPORATION is strictly prohibited.
+
+---
+- name: "Prompt for removal"
+  pause:
+    prompt: "Remove Kubernetes (run kubeadm reset)? [y/N]"
+    echo: yes
+  register: rmk8s
+- set_fact:
+    removek8s: "{{ rmk8s.user_input }}"
+- debug:
+    var: removek8s
+
+- name: Run kubeadm reset
+  become: yes
+  shell: echo y | kubeadm reset -f
+  when: removek8s=='y'
+  ignore_errors: yes
+
+- name: Remove Kubernetes Repository
+  become: yes
+  apt_repository:
+    repo: "{{ kubernetes_repo }}"
+    state: absent
+
+- name: Remove Kubernetes Files from Remote Host
+  file:
+    path: "tmp/{{item}}"
+    state: absent
+  with_items:
+    - kube-flannel-rbac.yml
+    - nvidia-device-plugin.yml
+    - rbac-config.yml
+    - kube-flannel.yml
+
+- name: "Uninstall kubernetes binaries"
+  pause:
+    prompt: "Uninstall Kubelet, Kubeadm & Kubectl? [y/N]"
+    echo: yes
+  register: rmkube
+- set_fact:
+    removek8s: "{{ rmkube.user_input }}"
+- debug:
+    var: removek8s
+
+- name: Remove APT hold on kubelet # This only removes apt-hold, does not remove the package
+  become: yes
+  dpkg_selections:
+    name: kubelet
+    selection: purge
+  ignore_errors: True
+
+- name: Remove APT hold on kubeadm # This only removes apt-hold, does not remove the package
+  become: yes
+  dpkg_selections:
+    name: kubeadm
+    selection: purge
+  ignore_errors: True
+
+- name: Remove APT hold on kubectl # This only removes apt-hold, does not remove the package
+  become: yes
+  dpkg_selections:
+    name: kubectl
+    selection: purge
+  ignore_errors: True
+
+- name: Remove kubelet, kubeadm & kubectl
+  become: yes
+  apt:
+    name:
+      - kubelet
+      - kubeadm
+      - kubectl
+    state: absent
+  when: removek8s=='y'
+
+- name: "Prompt to remove .kube directory"
+  pause:
+    prompt: "Remove .kube Directory? [y/N]"
+    echo: yes
+  register: rmkubeconfigdir
+- set_fact:
+    removekubeconfig: "{{ rmkubeconfigdir.user_input }}"
+- debug:
+    var: removekubeconfig
+
+- name: Remove kube Directory
+  file:
+    path: "/home/{{ clara_user }}/.kube"
+    state: absent
+  when: removekubeconfig=='y'
+  become: yes
+
+- name: "Prompt to uninstall helm"
+  pause:
+    prompt: "Remove Helm? [y/N]"
+    echo: yes
+  register: rmhelm
+- set_fact:
+    removehelm: "{{ rmhelm.user_input }}"
+- debug:
+    var: removehelm
+
+- name: Remove Nvidia NGC Helm Repository
+  ignore_errors: yes
+  shell: helm repo remove ngc
+  become_user: '{{ clara_user }}'
+  when: removehelm=='y'
+
+- name: Remove Helm
+  become: yes
+  file:
+    path: "/usr/local/bin/helm"
+    state: absent
+  when: removehelm=='y'
+
+- name: Remove logrotate config for container logs
+  file:
+    path: "/etc/logrotate.d/container_logs"
+    state: absent

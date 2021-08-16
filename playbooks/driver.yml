@@ -1,0 +1,28 @@
+# Copyright (c) 2020-2021, NVIDIA CORPORATION.  All rights reserved.
+#
+# NVIDIA CORPORATION and its licensors retain all intellectual property
+# and proprietary rights in and to this software, related documentation
+# and any modifications thereto.  Any use, reproduction, disclosure or
+# distribution of this software and related documentation without an express
+# license agreement from NVIDIA CORPORATION is strictly prohibited.
+---
+- hosts: clara_hosts
+  remote_user: "{{ clara_user }}"
+  become: yes
+  
+  vars:
+    execute: "install" # change to "uninstall" or pass `-e execute=uninstall` with the ansible-playbook command to uninstall
+    clara_user: '' # add the name of the user on the machine
+    # NVIDIA Driver Configuration:
+    nvidia_driver_version: 460
+  tasks:
+  # Install NVIDIA Driver
+  - name: Install Nvidia Driver (if needed)
+    include_role:
+      name: install-nvidia-driver
+    when: execute=="install"
+
+  - name: Remove Nvidia Driver
+    include_role:
+      name: remove-nvidia-driver
+    when: execute=="uninstall"

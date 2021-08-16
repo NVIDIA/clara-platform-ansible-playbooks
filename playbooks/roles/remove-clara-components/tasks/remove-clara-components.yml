@@ -1,0 +1,35 @@
+# Copyright (c) 2020-2021, NVIDIA CORPORATION.  All rights reserved.
+#
+# NVIDIA CORPORATION and its licensors retain all intellectual property
+# and proprietary rights in and to this software, related documentation
+# and any modifications thereto.  Any use, reproduction, disclosure or
+# distribution of this software and related documentation without an express
+# license agreement from NVIDIA CORPORATION is strictly prohibited.
+
+---
+- name: Stop Clara Components
+  command: "clara {{ item }} stop -y"
+  with_items: "{{ clara_components }}"
+  become_user: '{{ clara_user }}'
+  ignore_errors: true
+  args:
+    warn: false
+
+- name: "Prompt for removal of .clara directory"
+  pause:
+    prompt: "Remove .clara directory [y/N]"
+    echo: yes
+  register: rm_clara_dotfiles
+
+- set_fact:
+    remove_clara_dotfiles: "{{ rm_clara_dotfiles.user_input }}"
+
+- name: Remove .clara directory
+  become: yes
+  file:
+    path: "/home/{{ clara_user }}/.clara"
+    state: absent
+    async: 45
+    poll: 5
+  ignore_errors: yes
+  when: rm_clara_dotfiles=='y'

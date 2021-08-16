@@ -1,0 +1,92 @@
+# Copyright (c) 2020-2021, NVIDIA CORPORATION.  All rights reserved.
+#
+# NVIDIA CORPORATION and its licensors retain all intellectual property
+# and proprietary rights in and to this software, related documentation
+# and any modifications thereto.  Any use, reproduction, disclosure or
+# distribution of this software and related documentation without an express
+# license agreement from NVIDIA CORPORATION is strictly prohibited.
+
+---
+- name: Check for 'clara' binary
+  shell: "which clara"
+  register: clara
+  ignore_errors: True
+
+- name: Remove 'clara' binary
+  become: yes
+  file:
+    path: "{{ clara.stdout }}"
+    state: absent
+  when: clara.stdout != ''
+
+- name: Check for 'clarac' binary
+  shell: "which clarac"
+  register: clarac
+  ignore_errors: True
+
+- name: Remove 'clarac' binary
+  become: yes
+  file:
+    path: "{{ clarac.stdout }}"
+    state: absent
+  when: clarac.stdout != ''
+
+- name: Check for 'clara-console' binary
+  shell: "which clara-console"
+  register: clara_console
+  ignore_errors: True
+
+- name: Remove 'clara-console' binary
+  become: yes
+  file:
+    path: "{{ clara_console.stdout }}"
+    state: absent
+  when: clara_console.stdout != ''
+
+- name: Check for 'clara-dicom' binary
+  shell: "which clara-dicom"
+  register: clara_dicom
+  ignore_errors: True
+
+- name: Remove 'clara-dicom' binary
+  become: yes
+  file:
+    path: "{{ clara_dicom.stdout }}"
+    state: absent
+  when: clara_dicom.stdout != ''
+
+- name: Check for 'clara-pull' binary
+  shell: "which clara-pull"
+  register: clara_pull
+  ignore_errors: True
+
+- name: Remove 'clara-pull' binary
+  become: yes
+  file:
+    path: "{{ clara_pull.stdout }}"
+    state: absent
+  when: clara_pull.stdout != ''
+
+- name: Check for 'clara-platform' binary
+  shell: "which clara-platform"
+  register: clara_platform
+  ignore_errors: True
+
+- name: Remove 'clara-platform' binary
+  become: yes
+  file:
+    path: "{{ clara_platform.stdout }}"
+    state: absent
+  when: clara_platform.stdout != ''
+
+- name: Check for 'clara-render' binary
+  shell: "which clara-render"
+  register: clara_render
+  ignore_errors: True
+
+- name: Remove 'clara-render' binary
+  become: yes
+  file:
+    path: "{{ clara_render.stdout }}"
+    state: absent
+  when: clara_render.stdout != ''

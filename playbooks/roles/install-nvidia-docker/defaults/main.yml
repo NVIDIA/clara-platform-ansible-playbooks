@@ -1,0 +1,16 @@
+# Copyright (c) 2020-2021, NVIDIA CORPORATION.  All rights reserved.
+#
+# NVIDIA CORPORATION and its licensors retain all intellectual property
+# and proprietary rights in and to this software, related documentation
+# and any modifications thereto.  Any use, reproduction, disclosure or
+# distribution of this software and related documentation without an express
+# license agreement from NVIDIA CORPORATION is strictly prohibited.
+---
+docker_ce_gpg: "https://download.docker.com/linux/ubuntu/gpg"
+docker_ce_repo_bionic: "deb https://download.docker.com/linux/ubuntu bionic stable"
+docker_ce_repo_focal: "deb https://download.docker.com/linux/ubuntu focal stable"
+
+_ubuntu_repo_dir: "{{ ansible_distribution | lower }}{{ ansible_distribution_version }}"
+nvidia_docker_gpg: "https://nvidia.github.io/nvidia-docker/gpgkey"
+nvidia_docker_repo_src: "https://nvidia.github.io/nvidia-docker/{{ _ubuntu_repo_dir }}/nvidia-docker.list"
+nvidia_docker_repo_dst: "/etc/apt/sources.list.d/nvidia-docker.list"

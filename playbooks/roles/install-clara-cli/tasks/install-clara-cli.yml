@@ -1,0 +1,60 @@
+# Copyright (c) 2020-2021, NVIDIA CORPORATION.  All rights reserved.
+#
+# NVIDIA CORPORATION and its licensors retain all intellectual property
+# and proprietary rights in and to this software, related documentation
+# and any modifications thereto.  Any use, reproduction, disclosure or
+# distribution of this software and related documentation without an express
+# license agreement from NVIDIA CORPORATION is strictly prohibited.
+
+---
+- name: Remove Any Existing Clara CLI Packages
+  shell: rm -rf clara_cli*
+  args:
+    chdir: /tmp
+
+- name: Download Latest Clara CLI
+  command: ngc registry resource download-version {{ngc_org}}/{{ngc_team}}/{{cli_target}}
+  args:
+    chdir: /tmp
+  become_user: '{{ clara_user }}'
+
+
+- name: Unarchive Clara CLI Package
+  shell: find clara_cli* | grep cli.zip | xargs -I {} unzip {} -d clara_cli
+  args:
+    chdir: /tmp
+
+- name: Find Clara CLI Binaries
+  find:
+    paths: [ "/tmp/clara_cli" ]
+    patterns: 'clara*'
+    file_type: file
+  register: clara_cli_binaries
+
+- name: Copy Clara CLI Binaries to Path
+  copy:
+    src: '{{item.path}}'
+    dest: /usr/local/bin/
+    remote_src: yes
+    owner: root
+    group: root
+    mode: '0755'
+  with_items: '{{clara_cli_binaries.files}}'
+  become: yes
+
+- name: Confirm Clara CLI is Installed Present
+  command: which clara
+  register: command_result
+  failed_when: "'FAILED' in command_result.stderr"
+
+- name: Configure Clara CLI with NGC Credentials and Org/Team
+  command: "clara config -y --key {{ ngc_api_key }} --orgteam '{{ ngc_org }}/{{ ngc_team }}' --verbose"
+  become: false
+  become_user: '{{ clara_user }}'
+
+- name: Check Clara CLI Configuration
+  stat:
+    path: "/home/{{ clara_user }}/.clara"
+  register: stat_result
+  failed_when: not stat_result.stat.exists
+  

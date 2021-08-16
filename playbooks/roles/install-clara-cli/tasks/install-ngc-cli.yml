@@ -1,0 +1,67 @@
+# Copyright (c) 2020-2021, NVIDIA CORPORATION.  All rights reserved.
+#
+# NVIDIA CORPORATION and its licensors retain all intellectual property
+# and proprietary rights in and to this software, related documentation
+# and any modifications thereto.  Any use, reproduction, disclosure or
+# distribution of this software and related documentation without an express
+# license agreement from NVIDIA CORPORATION is strictly prohibited.
+
+---
+- name: Ensure Unzip is present
+  become: yes
+  apt: 
+    update_cache: yes 
+    name: unzip
+    state: latest
+
+- name: Download NGC CLI
+  get_url:
+    url: "{{ ngc_cli_url }}"
+    dest: "{{ ngc_cli_dest }}"
+
+- name: Create NGC Unarchive Location
+  file:
+    path: "{{ ngc_tmp_unpack }}"
+    state: directory
+
+- name: Unarchive NGC CLI
+  unarchive:
+    src: "{{ ngc_cli_dest }}"
+    dest: "{{ ngc_tmp_unpack }}"
+    remote_src: yes
+
+- name: Verify NGC CLI Checksum
+  command: md5sum -c ngc.md5
+  args: 
+    chdir: "{{ ngc_tmp_unpack }}"
+  register: md5match
+  failed_when: "'FAILED' in md5match.stdout"
+
+- name: Make NGC CLI Executable
+  file:
+    path: "{{ ngc_tmp_unpack }}/ngc"
+    mode: a+x
+
+- name: Copy the NGC CLI to Path
+  copy:
+    src: "{{ ngc_tmp_unpack }}/ngc"
+    dest: "{{ ngc_bin_path }}/ngc"
+    remote_src: yes
+    owner: root
+    group: root
+    mode: '0755'
+  become: yes
+
+- name: Create NGC config directory in the user home dir
+  file:
+    path: "/home/{{ clara_user }}/.ngc"
+    state: directory
+    mode: '0755'
+  become_user: '{{ clara_user }}'
+
+- name: Configure NGC CLI
+  template:
+    src: ngc_config.j2
+    dest: "/home/{{ clara_user }}/.ngc/config"
+    mode: '0600'
+  become_user: '{{ clara_user }}'

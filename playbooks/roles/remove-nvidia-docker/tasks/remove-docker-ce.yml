@@ -1,0 +1,41 @@
+# Copyright (c) 2020-2021, NVIDIA CORPORATION.  All rights reserved.
+#
+# NVIDIA CORPORATION and its licensors retain all intellectual property
+# and proprietary rights in and to this software, related documentation
+# and any modifications thereto.  Any use, reproduction, disclosure or
+# distribution of this software and related documentation without an express
+# license agreement from NVIDIA CORPORATION is strictly prohibited.
+
+---
+- name: "Uninstall Docker"
+  pause:
+    prompt: "Remove Docker? [y/N]"
+    echo: yes
+  register: rm_docker
+- set_fact:
+    remove_docker: "{{ rm_docker.user_input }}"
+
+- name: Remove Docker CE package on Bionic
+  become: yes
+  apt: 
+    name: docker-ce 
+    state: absent
+  when: "ansible_lsb.release=='18.04'"
+
+- name: Remove Docker CE Repository on Bionic
+  become: yes
+  apt_repository:
+    repo: "{{ docker_ce_repo }}"
+    state: absent
+  when: 
+   - remove_docker=='y'
+   -  "ansible_lsb.release=='18.04'"
+
+- name: Remove Docker.io package on Focal
+  become: yes
+  apt: 
+    name: docker.io
+    state: absent
+  when: 
+   - remove_docker=='y'
+   -  "ansible_lsb.release=='18.04'"

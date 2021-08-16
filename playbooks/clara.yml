@@ -1,0 +1,67 @@
+# Copyright (c) 2020-2021, NVIDIA CORPORATION.  All rights reserved.
+#
+# NVIDIA CORPORATION and its licensors retain all intellectual property
+# and proprietary rights in and to this software, related documentation
+# and any modifications thereto.  Any use, reproduction, disclosure or
+# distribution of this software and related documentation without an express
+# license agreement from NVIDIA CORPORATION is strictly prohibited.
+---
+- hosts: all
+  gather_facts: yes
+  remote_user: "{{ clara_user }}"
+  become: yes
+  vars:
+    execute: "install" # change to "uninstall" or pass `-e execute=uninstall` with the ansible-playbook command to uninstall
+    clara_user: '' # add the name of the user on the machine
+
+    # Set this before running the install-clara playbook
+    ngc_api_key: ''
+    # NGC (NVIDIA Graphics Cloud) Org and Team to Install Clara from:
+    ngc_org: nvidia
+    ngc_team: clara
+    ngc_helm_repo: https://helm.ngc.nvidia.com
+
+    # Install base Clara Component(s) -- 'platform' is always necesary for Clara to run
+    clara_components: [ 'platform', 'dicom']
+    # Example value with all availalbe components:
+    # clara_components: [ 'platform', 'dicom', 'render', 'console' ]
+
+    # Note that the Kubernetes pod_network_cidr variable is network specific. 
+    # It is configurable by changing the variable below if needed. 
+    # More information here https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/#pod-network
+    pod_network_cidr: 10.254.0.0/16
+  tasks:
+  # Install Clara
+  - name: Install Nvidia Docker
+    include_role:
+      name: install-nvidia-docker
+    when: execute=="install"
+  - name: Install Kubernetes Configured for Clara
+    include_role:
+      name: install-kubernetes
+    when: execute=="install"
+  - name: Install Clara CLI
+    include_role:
+      name: install-clara-cli
+    when: execute=="install"
+  - name: Install Clara Components
+    include_role:
+      name: install-clara-components
+    when: execute=="install"
+  # Uninstall Clara
+  - name: Uninstall Clara Components
+    include_role:
+      name: remove-clara-components
+    when: execute=="uninstall"
+  - name: Uninstall Clara CLI
+    include_role:
+      name: remove-clara-cli
+    when: execute=="uninstall"
+  - name: Uninstall Kubernetes Configured for Clara
+    include_role:
+      name: remove-kubernetes
+    when: execute=="uninstall"
+  - name: Uninstall Nvidia Docker
+    include_role:
+      name: remove-nvidia-docker
+    when: execute=="uninstall"

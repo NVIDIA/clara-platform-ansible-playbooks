@@ -1,0 +1,20 @@
+# Copyright (c) 2020-2021, NVIDIA CORPORATION.  All rights reserved.
+#
+# NVIDIA CORPORATION and its licensors retain all intellectual property
+# and proprietary rights in and to this software, related documentation
+# and any modifications thereto.  Any use, reproduction, disclosure or
+# distribution of this software and related documentation without an express
+# license agreement from NVIDIA CORPORATION is strictly prohibited.
+
+---
+# 'cuda' is the generic package and will pull the latest version
+
+# Install the /etc/profile.d/cuda-vars.sh script that will put
+# the CUDA toolkit binaries and libraries in the default environmentL:
+cuda_toolkit_add_profile_script: yes
+
+# Ubuntu specific variables
+_ubuntu_repo_dir: "{{ ansible_distribution | lower }}{{ ansible_distribution_version | replace('.', '') }}/{{ ansible_architecture }}"
+nvidia_driver_ubuntu_cuda_repo_gpgkey_url: "https://developer.download.nvidia.com/compute/cuda/repos/{{ _ubuntu_repo_dir }}/7fa2af80.pub"
+nvidia_driver_ubuntu_cuda_repo_gpgkey_id: "7fa2af80"
+nvidia_driver_ubuntu_cuda_repo_baseurl: "http://developer.download.nvidia.com/compute/cuda/repos/{{ _ubuntu_repo_dir }}"
