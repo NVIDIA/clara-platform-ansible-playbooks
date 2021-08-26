@@ -1,0 +1,22 @@
+# Copyright 2021 NVIDIA Corporation
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#     http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+---
+docker_ce_gpg: "https://download.docker.com/linux/ubuntu/gpg"
+docker_ce_repo_bionic: "deb https://download.docker.com/linux/ubuntu bionic stable"
+docker_ce_repo_focal: "deb https://download.docker.com/linux/ubuntu focal stable"
+
+_ubuntu_repo_dir: "{{ ansible_distribution | lower }}{{ ansible_distribution_version }}"
+nvidia_docker_gpg: "https://nvidia.github.io/nvidia-docker/gpgkey"
+nvidia_docker_repo_src: "https://nvidia.github.io/nvidia-docker/{{ _ubuntu_repo_dir }}/nvidia-docker.list"
+nvidia_docker_repo_dst: "/etc/apt/sources.list.d/nvidia-docker.list"

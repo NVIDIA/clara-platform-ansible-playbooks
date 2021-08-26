@@ -1,0 +1,47 @@
+# Copyright 2021 NVIDIA Corporation
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#     http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+- name: "Uninstall Docker"
+  pause:
+    prompt: "Remove Docker? [y/N]"
+    echo: yes
+  register: rm_docker
+- set_fact:
+    remove_docker: "{{ rm_docker.user_input }}"
+
+- name: Remove Docker CE package on Bionic
+  become: yes
+  apt: 
+    name: docker-ce 
+    state: absent
+  when: "ansible_lsb.release=='18.04'"
+
+- name: Remove Docker CE Repository on Bionic
+  become: yes
+  apt_repository:
+    repo: "{{ docker_ce_repo }}"
+    state: absent
+  when: 
+   - remove_docker=='y'
+   -  "ansible_lsb.release=='18.04'"
+
+- name: Remove Docker.io package on Focal
+  become: yes
+  apt: 
+    name: docker.io
+    state: absent
+  when: 
+   - remove_docker=='y'
+   -  "ansible_lsb.release=='18.04'"

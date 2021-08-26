@@ -9,7 +9,7 @@
     "Clara Deploy",
     "Medical Imaging"
   ],
-  "logo": "https://assets.nvidiagrid.net/ngc/containers/covid-clara.png",
+  "logo": "https://assets.nvidiagrid.net/ngc/logos/Clara.png",
   "modelFormat": "N/A",
   "name": "clara_ansible",
   "performance": "$PERFORMANCE_MD",

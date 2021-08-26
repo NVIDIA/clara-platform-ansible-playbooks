@@ -12,25 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Define Clara Host Variables Here
+# Define Clara Host Variables Here. Note, the contents of this file can be copied to `/etc/ansible/hosts`
 
 [clara_hosts]
-# Add the IP address of your remote machine to install Clara here. Eg:
+# ** To install Clara onto one or more remote machines, running Ansible from your local machine **
+# add their IP addresses below, eg:
 # 10.0.0.2
 
-# If running locally uncomment the following and pass the flag "--ask-become-pass"
-# localhost ansible_connection=local
+# ** To installing Clara on your local machine, running Ansible from your local machine **
+# Copy the contents of your SSH public key (~/.ssh/id_rsa.pub) into ~/.ssh/authorized_keys
+# In addition, set the following IP address.:
+# 127.0.0.1
 
 [clara_hosts:vars]
+# Force Ansible to use Python3. Only change if your Python3 binary is in a different location
 ansible_python_interpreter=/usr/bin/python3
-# Set the clara_user to the user of your remote system
-clara_user=''
-
-# Note that the kubernetes_service_cidr is network specific. Eg:
-# 192.168.2.0/24
-# or
-# 10.255.0.0/16
-kubernetes_service_cidr=''
-
-# Set this before running the install-clara playbook
-ngc_api_key=''

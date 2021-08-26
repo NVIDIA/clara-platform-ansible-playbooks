@@ -1,0 +1,56 @@
+# Copyright 2021 NVIDIA Corporation
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#     http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+
+- name: Remove NVIDIA driver ppa
+  become: yes
+  apt_repository:
+    repo: ppa:graphics-drivers/ppa
+    state: absent
+
+- name: Uninstall NVIDIA driver
+  become: yes
+  apt:
+    name: 
+      - "nvidia-driver-*"
+      - "libnvidia-compute-*"
+      - "nvidia-utils-*"
+      - nvidia-smi
+    state: absent
+    autoremove: yes
+
+- name: Remove Profile Script to Set Environment for Toolkit
+  become: yes
+  file:
+    dest: "/etc/profile.d/cuda-vars.sh"
+    state: "absent"
+    
+  when: cuda_toolkit_add_profile_script
+- name: "Reboot"
+  become: yes
+  pause:
+    prompt: "Reboot now? (This will complete the removal of the NVIDIA driver) [y/N]"
+    echo: yes
+  register: restart
+
+- set_fact:
+    reboot: "{{ restart.user_input }}"
+
+- name: Reboot Machine after removal
+  become: yes
+  run_once: true
+  reboot:
+    reboot_timeout: 360
+  when: reboot=='y'

@@ -1,0 +1,46 @@
+# Copyright 2021 NVIDIA Corporation
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#     http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+- name: "Uninstall NVIDIA Docker 2"
+  pause:
+    prompt: "Remove NVIDIA Docker 2? [y/N]"
+    echo: yes
+  register: rm_nvidia_docker
+- set_fact:
+    remove_nvidia_docker: "{{ rm_nvidia_docker.user_input }}"
+- debug:
+    var: remove_nvidia_docker
+
+- name: Remove Nvidia Docker Apt Repo
+  become: yes
+  file:
+    path: /etc/apt/sources.list.d/nvidia-docker.list
+    state: absent
+  when: remove_nvidia_docker=='y'
+
+- name: Remove Nvidia Docker 2
+  become: yes
+  apt: 
+    name: nvidia-docker2 
+    state: absent
+    purge: yes
+  when: remove_nvidia_docker=='y'
+
+- name: Restart Docker after removing nvidia-docker2
+  become: yes
+  systemd:
+    name: docker
+    state: reloaded
+  when: remove_nvidia_docker=='y'

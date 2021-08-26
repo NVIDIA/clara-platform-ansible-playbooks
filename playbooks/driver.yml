@@ -1,0 +1,34 @@
+# Copyright 2021 NVIDIA Corporation
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#     http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+---
+- hosts: clara_hosts
+  remote_user: "{{ clara_user }}"
+  become: yes
+  
+  vars:
+    execute: "install" # change to "uninstall" or pass `-e execute=uninstall` with the ansible-playbook command to uninstall
+    clara_user: '' # add the name of the user on the machine
+    # NVIDIA Driver Configuration:
+    nvidia_driver_version: 460
+  tasks:
+  # Install NVIDIA Driver
+  - name: Install Nvidia Driver (if needed)
+    include_role:
+      name: install-nvidia-driver
+    when: execute=="install"
+
+  - name: Remove Nvidia Driver
+    include_role:
+      name: remove-nvidia-driver
+    when: execute=="uninstall"
